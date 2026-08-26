@@ -1,4 +1,7 @@
 from data.DataLoader import DataLoader
+from models.trainer import Trainer
+from models.interface import grader_interface, model_interface
+from models.classification.classification_grader import ClassificationGrader
 
 
 if __name__ == "__main__":
@@ -20,3 +23,16 @@ if __name__ == "__main__":
         test_df = loader.get_test_dataframe()
         print(f"{len(train_df) = }")
         print(f"{len(test_df) = }")
+        
+        # trainer = Trainer(
+        #         models=[
+        #                 RandomForestClassifier(),
+        #                 XGBoostClassifier(),
+        #                 RandomForestRegressor(),
+        #         ]
+        # )
+
+        # results = trainer.train(
+        #         train_data=train_df,
+        #         test_data=test_df,
+        # )
