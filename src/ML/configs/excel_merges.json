@@ -1,0 +1,12 @@
+[
+        {
+                "right": "DimCustomer",
+                "on": "Customer ID",
+                "how": "left"
+        },
+        {
+                "right": "DimProduct",
+                "on": "Product ID",
+                "how": "left"
+        }
+]

@@ -1,0 +1,34 @@
+{
+        "FactOrder": {
+                "Order ID": "str",
+                "Customer ID": "str",
+                "Order Priority": "str",
+                "Order Date": "str",
+                "Market": "str",
+                "Product ID": "str",
+                "Sales": "float64",
+                "Quantity": "int64",
+                "Discount": "float64",
+                "Profit": "float64",
+                "Shipping Cost": "float64",
+                "Returned": "bool",
+                "Row ID": "int64",
+                "Ship Date": "str",
+                "Ship Mode": "str",
+                "City": "str",
+                "State": "str",
+                "Country": "str",
+                "Region": "str"
+        },
+        "DimCustomer": {
+                "Customer ID": "str",
+                "Customer Name": "str",
+                "Segment": "str"
+        },
+        "DimProduct": {
+                "Product ID": "str",
+                "Product Name": "str",
+                "Category": "str",
+                "Sub-Category": "str"
+        }
+}
