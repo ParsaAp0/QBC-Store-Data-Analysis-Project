@@ -1,16 +1,12 @@
-from typing import Any
-
 import pandas as pd
-
 from .interface import model_interface
-
 
 class Trainer:
         def __init__(self, models: list[model_interface]):
                 self.models = models
                 self.results = {}
 
-        def train(self, train_data: pd.DataFrame, test_data: pd.DataFrame) -> dict[str, dict[str, Any]]:
+        def train(self, train_data: pd.DataFrame, test_data: pd.DataFrame) -> dict:
                 for model in self.models:
                         print(f"Training model: {model.name}")
 
