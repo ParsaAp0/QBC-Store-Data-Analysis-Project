@@ -2,6 +2,7 @@ from data.DataLoader import DataLoader
 from models.trainer import Trainer
 from models.interface import grader_interface, model_interface
 from models.classification.classification_grader import ClassificationGrader
+from models.regression.example_model import SimpleRegressionModel
 
 
 if __name__ == "__main__":
@@ -11,28 +12,23 @@ if __name__ == "__main__":
         )
 
         loader.load()
-
         valid, log = loader.validate()
-
         print(log)
-
         if not valid:
                 raise RuntimeError("Dataset validation failed.")
 
         train_df = loader.get_train_dataframe()
         test_df = loader.get_test_dataframe()
-        print(f"{len(train_df) = }")
-        print(f"{len(test_df) = }")
         
-        # trainer = Trainer(
-        #         models=[
-        #                 RandomForestClassifier(),
-        #                 XGBoostClassifier(),
-        #                 RandomForestRegressor(),
-        #         ]
-        # )
+        trainer = Trainer(
+                models=[
+                        SimpleRegressionModel(),
+                        # XGBoostClassifier(),
+                        # RandomForestRegressor(),
+                ]
+        )
 
-        # results = trainer.train(
-        #         train_data=train_df,
-        #         test_data=test_df,
-        # )
+        results = trainer.train(
+                train_data=train_df,
+                test_data=test_df,
+        )

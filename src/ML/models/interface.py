@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
+import joblib
 
 class model_interface(ABC):
         def __init__(self, name: str):
@@ -36,6 +37,21 @@ class model_interface(ABC):
                 Returns:
                         The best parameters found during tuning.
                 """
+                pass
+        
+        @abstractmethod
+        def predict(self, test_data: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+                pass
+        
+        def save(self, path: str) -> None:
+                joblib.dump(self, path)
+
+        @classmethod
+        def load(cls, path: str):
+                return joblib.load(path)
+        
+        @abstractmethod
+        def get_parameters(self) -> dict:
                 pass
 
 class grader_interface(ABC):
