@@ -1,7 +1,9 @@
 from data.DataLoader import DataLoader
 from models.trainer import Trainer
 from models.regression.example_model import SimpleRegressionModel
-
+from models.comparator import ModelComparator
+from models.selector import ModelSelector
+import json
 
 if __name__ == "__main__":
         loader = DataLoader(
@@ -31,6 +33,33 @@ if __name__ == "__main__":
                 test_data=test_df,
         )
         
+        metrics = {
+                "classification": "f1",
+                "regression": "rmse",
+        }
+        
+        comparator = ModelComparator()
+
+        selector = ModelSelector(
+                comparator=comparator,
+                experiment_name="Retail Project",
+        )
+        
+        best_classifier = selector.select(
+                task="classification",
+                metric="f1",
+        )
+
+        best_regressor = selector.select(
+                task="regression",
+                metric="rmse",
+        )
+        
+        print("-------------------------- best_classifier --------------------------")
+        print(json.dumps(best_classifier, indent=4))
+        print("-------------------------- best_regressor --------------------------")
+        print(json.dumps(best_regressor, indent=4))
+
         # uv sync
         # uv run src/ML/train.py 
         # uv run mlflow server --port 5000

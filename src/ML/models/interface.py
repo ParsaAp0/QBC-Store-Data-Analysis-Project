@@ -4,9 +4,10 @@ import pandas as pd
 import joblib
 
 class model_interface(ABC):
-        def __init__(self, name: str):
+        def __init__(self, name: str, task: str):
                 self.name = name
                 self.model = None
+                self.task = task
 
         @abstractmethod
         def train(self, train_data: pd.DataFrame) -> dict:

@@ -219,9 +219,7 @@ class DataLoader:
 
                 valid = len(errors) == 0
                 lines = [
-                        "DataLoader Validation",
-                        "=====================",
-                        "",
+                        "--------------------- DataLoader Validation ---------------------",
                 ]
 
                 if fixes:
@@ -328,9 +326,7 @@ class DataLoader:
                 warnings: list[str],
         ) -> str:
                 lines = [
-                        "DataLoader Validation",
-                        "=====================",
-                        "",
+                        "--------------------- DataLoader Validation ---------------------",
                 ]
 
                 if errors:

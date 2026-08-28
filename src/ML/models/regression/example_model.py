@@ -19,7 +19,7 @@ input_columns = [
 
 class SimpleRegressionModel(model_interface):
         def __init__(self):
-                super().__init__("SimpleRegression example")
+                super().__init__("SimpleRegression example", "regression")
 
                 # Default hyperparameters
                 self.target_column = target_feature
