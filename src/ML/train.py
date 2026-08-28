@@ -21,10 +21,13 @@ if __name__ == "__main__":
         test_df = loader.get_test_dataframe()
         
         trainer = Trainer(
-                models=[
+                regression_models=[
                         SimpleRegressionModel(),
                         # XGBoostClassifier(),
                         # RandomForestRegressor(),
+                ],
+                classification_models=[
+                        
                 ]
         )
 
@@ -60,6 +63,6 @@ if __name__ == "__main__":
         print("-------------------------- best_regressor --------------------------")
         print(json.dumps(best_regressor, indent=4))
 
-        # uv sync
-        # uv run src/ML/train.py 
-        # uv run mlflow server --port 5000
+# uv sync
+# uv run mlflow server --port 5000
+# uv run src/ML/train.py 
