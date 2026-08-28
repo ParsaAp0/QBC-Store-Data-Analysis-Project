@@ -15,15 +15,6 @@ class Trainer:
                 for model in self.models:
                         print(f"Training model: {model.name}")
                         
-                        # with mlflow.start_run(run_name=model.name):
-                        #         train_log = model.train(train_data)
-                        #         test_score = model.evaluate(test_data)
-
-                        # self.results[model.name] = {
-                        #         "train": train_log,
-                        #         "test": test_score,
-                        # }
-                        
                         with mlflow.start_run(run_name=model.name):
                                 mlflow.log_params(model.get_parameters())
                                 train_score = model.train(train_data)

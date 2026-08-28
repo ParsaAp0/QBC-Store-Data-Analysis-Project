@@ -1,7 +1,5 @@
 from data.DataLoader import DataLoader
 from models.trainer import Trainer
-from models.interface import grader_interface, model_interface
-from models.classification.classification_grader import ClassificationGrader
 from models.regression.example_model import SimpleRegressionModel
 
 
@@ -32,3 +30,7 @@ if __name__ == "__main__":
                 train_data=train_df,
                 test_data=test_df,
         )
+        
+        # uv sync
+        # uv run src/ML/train.py 
+        # uv run mlflow server --port 5000

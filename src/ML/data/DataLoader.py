@@ -1,11 +1,12 @@
 from pathlib import Path
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GroupShuffleSplit
 import pandas as pd
 import json
 
 excel_sheets_config = "src/ML/configs/excel_sheets.json"
 merges_config = "src/ML/configs/excel_merges.json"
 validation_columns = "src/ML/configs/excel_columns.json"
+order_column_name = "Order ID"
 
 class DataLoader:
         def __init__(
@@ -296,13 +297,21 @@ class DataLoader:
                         raise RuntimeError(
                                 "No merged dataframe exists. Call load() first."
                         )
+                        
+                gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 
-                train_dataframe, test_dataframe = train_test_split(
-                        self._dataframe,
-                        train_size=self.train_test_split_percentage,
-                        random_state=self.random_state,
-                        shuffle=True,
-                )
+                # The 'groups' parameter must be the column that defines the groups
+                train_idx, test_idx = next(gss.split(self._dataframe, groups=self._dataframe[order_column_name]))
+
+                train_dataframe = self._dataframe.iloc[train_idx]
+                test_dataframe = self._dataframe.iloc[test_idx]
+
+                # train_dataframe, test_dataframe = train_test_split(
+                #         self._dataframe,
+                #         train_size=self.train_test_split_percentage,
+                #         random_state=self.random_state,
+                #         shuffle=True,
+                # )
 
                 self._train_dataframe = train_dataframe.reset_index(drop=True)
                 self._test_dataframe = test_dataframe.reset_index(drop=True)
