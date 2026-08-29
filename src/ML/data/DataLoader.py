@@ -466,7 +466,6 @@ class DataLoader:
                 result.reset_index(inplace=True)
                 return result
         
-        
         def _aggregate_numbers(self, dfg, num_col: str):
                 """
                 Groups by 'group_col' and returns a DataFrame with:

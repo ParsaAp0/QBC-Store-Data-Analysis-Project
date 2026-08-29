@@ -5,6 +5,8 @@ from sklearn.linear_model import Ridge
 from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
 from ..interface import model_interface
 from .regression_grader import RegressionGrader
+from pathlib import Path
+import json
 
 target_feature = "Profit"
 
@@ -16,6 +18,9 @@ input_columns = [
         "Market",
         "Profit",
 ]
+
+all_params_path = Path("src/ML/models/regression/example_model_all_parameters.json")
+best_params_path = Path("src/ML/models/regression/example_model_best_parameters.json")
 
 class SimpleRegressionModel(model_interface):
         def __init__(self):
@@ -94,7 +99,10 @@ class SimpleRegressionModel(model_interface):
                 return score
 
         def tune(self, train_data: pd.DataFrame) -> dict:
-
+                with all_params_path.open("r") as file:
+                        parameter_grid = json.load(file)
+                print(json.dumps(parameter_grid, indent=4))
+                # print("TEST")
                 return {}
         
         def get_parameters(self) -> dict:
