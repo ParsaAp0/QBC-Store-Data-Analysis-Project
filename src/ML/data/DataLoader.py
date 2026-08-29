@@ -426,7 +426,7 @@ class DataLoader:
                 country = self._str_get_mode(dfg, "Country", "Country")
                 region = self._str_get_mode(dfg, "Region", "Region")
                 # market_repeat = self._str_get_repeat(dfg, "Market", market_vals)
-                market_entropy = self._str_get_entropy(dfg, "Market")
+                # market_entropy = self._str_get_entropy(dfg, "Market")
                 market_mode = self._str_get_mode(dfg, "Market")
                 sales_cols = self._aggregate_numbers(dfg, "Sales")
                 quantity_cols = self._aggregate_numbers(dfg, "Quantity")
@@ -451,7 +451,7 @@ class DataLoader:
                         country,
                         region,
                         # market_repeat,
-                        market_entropy,
+                        # market_entropy,
                         market_mode,
                         sales_cols,
                         quantity_cols,
