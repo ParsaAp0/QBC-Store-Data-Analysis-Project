@@ -8,6 +8,7 @@ import json
 if __name__ == "__main__":
         loader = DataLoader(
                 excel_location="data/data.xlsx",
+                classification_excel_location = "data/classification_data.xlsx",
                 train_test_split_percentage=0.8
         )
 
@@ -16,9 +17,12 @@ if __name__ == "__main__":
         print(log)
         if not valid:
                 raise RuntimeError("Dataset validation failed.")
-
-        train_df = loader.get_train_dataframe()
-        test_df = loader.get_test_dataframe()
+        
+        
+        regression_train_df = loader.get_regression_train_dataframe()
+        regression_test_df = loader.get_regression_test_dataframe()
+        classification_train_df = loader.get_classificaation_train_dataframe()
+        classification_test_df = loader.get_classification_test_dataframe()
         
         trainer = Trainer(
                 regression_models=[
@@ -32,9 +36,16 @@ if __name__ == "__main__":
         )
 
         results = trainer.train(
-                train_data=train_df,
-                test_data=test_df,
+                # train_data=train_df,
+                # test_data=test_df,
+                regression_train_data = regression_train_df,
+                regression_test_data = regression_test_df,
+                classification_train_data = classification_train_df,
+                classification_test_data = classification_test_df
         )
+
+
+        
         
         metrics = {
                 "classification": "f1",

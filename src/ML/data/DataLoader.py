@@ -1,5 +1,6 @@
 from pathlib import Path
-from sklearn.model_selection import train_test_split, GroupShuffleSplit
+from sklearn.model_selection import GroupShuffleSplit
+import numpy as np
 import pandas as pd
 import json
 
@@ -12,10 +13,15 @@ class DataLoader:
         def __init__(
                 self,
                 excel_location: str | Path,
+                classification_excel_location: str | Path | None,
                 train_test_split_percentage: float,
                 random_state: int = 42,
         ):
                 self.excel_location = Path(excel_location)
+                if (classification_excel_location is None):
+                        self.classification_excel_location = None
+                else:
+                        self.classification_excel_location = Path(classification_excel_location)
                 self.train_test_split_percentage = train_test_split_percentage
                 with open(excel_sheets_config, 'r') as file:
                         self.excel_sheets = json.load(file)
@@ -41,8 +47,18 @@ class DataLoader:
                         self.excel_location,
                         sheet_name=self.excel_sheets,
                 )
+                self.classification_data = None
+                if self.classification_excel_location is not None:
+                        try:        
+                                self.classification_data = pd.read_excel(
+                                        self.classification_excel_location,
+                                        sheet_name="data",
+                                )
+                        except:
+                                self.classification_data = None
                 self._merge()
                 self._split()
+                self._prepare_data()
 
         def validate(self) -> tuple[bool, str]:
                 """
@@ -241,15 +257,37 @@ class DataLoader:
 
                 return valid, "\n".join(lines)
 
-        def get_train_dataframe(self) -> pd.DataFrame:
-                self._ensure_split()
+        def get_regression_train_dataframe(self) -> pd.DataFrame:
+                if self._regression_train_dataframe is None:
+                        raise RuntimeError(
+                                "Dataset has not been loaded and split yet. Call load() first."
+                        )
+                
+                return self._regression_train_dataframe.copy()
+        
+        def get_classificaation_train_dataframe(self) -> pd.DataFrame:
+                if self._classification_train_dataframe is None:
+                        raise RuntimeError(
+                                "Dataset has not been loaded and split yet. Call load() first."
+                        )
+                
+                return self._classification_train_dataframe.copy()
 
-                return self._train_dataframe.copy()
+        def get_regression_test_dataframe(self) -> pd.DataFrame:
+                if self._regression_test_dataframe is None:
+                        raise RuntimeError(
+                                "Dataset has not been loaded and split yet. Call load() first."
+                        )
 
-        def get_test_dataframe(self) -> pd.DataFrame:
-                self._ensure_split()
+                return self._regression_test_dataframe.copy()
 
-                return self._test_dataframe.copy()
+        def get_classification_test_dataframe(self) -> pd.DataFrame:
+                if self._classification_test_dataframe is None:
+                        raise RuntimeError(
+                                "Dataset has not been loaded and split yet. Call load() first."
+                        )
+
+                return self._classification_test_dataframe.copy()
 
         # =========================================================
         # Private methods
@@ -286,6 +324,21 @@ class DataLoader:
 
                 self._dataframe = dataframe
 
+        def _prepare_data(self) -> None:
+                self._regression_train_dataframe = self._regression_prepare_data(self._train_dataframe)
+                self._regression_test_dataframe = self._regression_prepare_data(self._test_dataframe)
+                if (self.classification_data is None):
+                        self._classification_train_dataframe = self._classification_prepare_data(self._train_dataframe)
+                        self._classification_test_dataframe = self._classification_prepare_data(self._test_dataframe)
+                else:
+                        return
+                
+                pd.concat([
+                                self._classification_train_dataframe,
+                                self._classification_test_dataframe
+                        ], ignore_index=True).to_excel('data/classification_data.xlsx', sheet_name='data', index=False)
+                
+
         def _split(self) -> None:
                 """
                 Split the merged dataframe into train and test sets.
@@ -297,34 +350,24 @@ class DataLoader:
                         )
                         
                 gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-
-                # The 'groups' parameter must be the column that defines the groups
                 train_idx, test_idx = next(gss.split(self._dataframe, groups=self._dataframe[order_column_name]))
-
                 train_dataframe = self._dataframe.iloc[train_idx]
                 test_dataframe = self._dataframe.iloc[test_idx]
-
-                # train_dataframe, test_dataframe = train_test_split(
-                #         self._dataframe,
-                #         train_size=self.train_test_split_percentage,
-                #         random_state=self.random_state,
-                #         shuffle=True,
-                # )
-
                 self._train_dataframe = train_dataframe.reset_index(drop=True)
                 self._test_dataframe = test_dataframe.reset_index(drop=True)
-
-        def _ensure_split(self) -> None:
-                if self._train_dataframe is None or self._test_dataframe is None:
-                        raise RuntimeError(
-                                "Dataset has not been loaded and split yet. Call load() first."
-                        )
+                
+                
+                if (self.classification_data is not None):
+                        
+                        gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+                        train_idx, test_idx = next(gss.split(self.classification_data, groups=self.classification_data[order_column_name]))
+                        train_dataframe = self.classification_data.iloc[train_idx]
+                        test_dataframe = self.classification_data.iloc[test_idx]
+                        self._classification_train_dataframe = train_dataframe.reset_index(drop=True)
+                        self._classification_test_dataframe = test_dataframe.reset_index(drop=True)
 
         @staticmethod
-        def _build_log(
-                errors: list[str],
-                warnings: list[str],
-        ) -> str:
+        def _build_log(errors: list[str], warnings: list[str]) -> str:
                 lines = [
                         "--------------------- DataLoader Validation ---------------------",
                 ]
@@ -349,3 +392,132 @@ class DataLoader:
                 else:
                         lines.append("Validation: PASSED")
                 return "\n".join(lines)
+        
+        def _regression_prepare_data(self, data: pd.DataFrame) -> pd.DataFrame:
+                return data
+        
+        def _classification_prepare_data(self, data: pd.DataFrame) -> pd.DataFrame:
+                # print(data)
+                # exit()
+                group_col = "Order ID"
+                dfg = data.groupby(group_col)
+                
+                category_vals = [
+                        "Office Supplies",
+                        "Technology",
+                        "Furniture"
+                ]
+                market_vals = [
+                        "APAC",
+                        "US",
+                        "LATAM",
+                        "EU",
+                        "EMEA",
+                        "Africa",
+                        "Canada"
+                ]
+                # print(self._str_get_mode(dfg, "Market"))
+                customer_id = self._str_get_mode(dfg, "Customer ID", "Customer ID")
+                segment = self._str_get_mode(dfg, "Segment", "Segment")
+                order_priority = self._str_get_mode(dfg, "Order Priority", "Order Priority")
+                order_date = self._str_get_mode(dfg, "Order Date", "Order Date")
+                city = self._str_get_mode(dfg, "City", "City")
+                state = self._str_get_mode(dfg, "State", "State")
+                country = self._str_get_mode(dfg, "Country", "Country")
+                region = self._str_get_mode(dfg, "Region", "Region")
+                # market_repeat = self._str_get_repeat(dfg, "Market", market_vals)
+                market_entropy = self._str_get_entropy(dfg, "Market")
+                market_mode = self._str_get_mode(dfg, "Market")
+                sales_cols = self._aggregate_numbers(dfg, "Sales")
+                quantity_cols = self._aggregate_numbers(dfg, "Quantity")
+                discount_cols = self._aggregate_numbers(dfg, "Discount")
+                profit_cols = self._aggregate_numbers(dfg, "Profit")
+                category_repeat = self._str_get_repeat(dfg, "Category", category_vals)
+                category_entropy = self._str_get_entropy(dfg, "Category")
+                category_mode = self._str_get_mode(dfg, "Category")
+                ship_mode = self._str_get_mode(dfg, "Ship Mode")
+                
+                
+                # print(pd.concat([d1, d2, d3], axis=1))
+                # print(self._aggregate_numbers(dfg, "Sales"))
+                
+                result = pd.concat([
+                        customer_id,
+                        segment,
+                        order_priority,
+                        order_date,
+                        city,
+                        state,
+                        country,
+                        region,
+                        # market_repeat,
+                        market_entropy,
+                        market_mode,
+                        sales_cols,
+                        quantity_cols,
+                        discount_cols,
+                        profit_cols,
+                        category_repeat,
+                        category_entropy,
+                        category_mode,
+                        ship_mode
+                        ], axis=1)
+                
+                result.reset_index(inplace=True)
+                return result
+        
+        
+        def _aggregate_numbers(self, dfg, num_col: str):
+                """
+                Groups by 'group_col' and returns a DataFrame with:
+                        sum, mean, std, median for 'num_col'
+                """
+                result = dfg[num_col].agg(
+                        ['sum', 'mean', 'std', 'median']
+                ).fillna(0).rename(columns={
+                        'sum': f'{num_col}_sum',
+                        'mean': f'{num_col}_mean',
+                        'std': f'{num_col}_std',
+                        'median': f'{num_col}_median'
+                })
+                # Note: pandas .agg automatically names columns, but we keep it explicit.
+                return result
+        
+        def _str_get_mode(self, dfg, str_col: str, column_name = None) -> pd.Series:
+                mode_series = dfg[str_col].apply(lambda x: x.mode()[0] if not x.mode().empty else np.nan)
+                if column_name == None:
+                        mode_series.name = f'{str_col}_mode'
+                else:
+                        mode_series.name = column_name
+                return mode_series
+        
+        def _str_get_entropy(self, dfg, str_col: str, column_name = None) -> pd.Series:
+                entropy_series = dfg[str_col].apply(self._normalized_entropy)
+                
+                if column_name == None:
+                        entropy_series.name = f'{str_col}_entropy'
+                else:
+                        entropy_series.name = column_name
+                return entropy_series
+        
+        def _str_get_repeat(self, dfg, str_col: str, categories: list[str]):
+                #    unstack to get categories as columns, fill missing with 0
+                counts_df = dfg[str_col].value_counts().unstack(fill_value=0)
+                # Ensure all categories exist (reindex with the provided list)
+                counts_df = counts_df.reindex(columns=categories, fill_value=0)
+                # Rename columns to numberOfRep(cat)
+                counts_df.columns = [f'{str_col}={cat}' for cat in categories]
+                return counts_df
+        
+        def _normalized_entropy(self, series: pd.Series):
+                n = len(series)
+                if n == 0:
+                        return np.nan
+                counts = series.value_counts()
+                k = len(counts)                     # number of unique categories
+                if k <= 1:
+                        return 0.0
+                probs = counts / n
+                entropy = -sum(p * np.log(p) for p in probs)
+                max_entropy = np.log(k)
+                return entropy / max_entropy

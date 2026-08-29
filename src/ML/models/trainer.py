@@ -16,12 +16,21 @@ class Trainer:
                 self.classification_models = classification_models
                 self.results = {}
 
-        def train(self, train_data: pd.DataFrame, test_data: pd.DataFrame) -> dict:
+        def train(self,
+                        regression_train_data: pd.DataFrame,
+                        regression_test_data: pd.DataFrame,
+                        classification_train_data: pd.DataFrame,
+                        classification_test_data: pd.DataFrame
+                ) -> dict:
+                # regression_train_data = regression_train_df,
+                # regression_test_data = regression_test_df,
+                # classification_train_data = classification_train_df,
+                # classification_test_data = classification_test_df
                 
-                regression_train_data = self._regression_prepare_data(train_data)
-                regression_test_data = self._regression_prepare_data(test_data)
-                classification_train_data = self._classification_prepare_data(train_data)
-                classification_test_data = self._classification_prepare_data(test_data)
+                # regression_train_data = self._regression_prepare_data(train_data)
+                # regression_test_data = self._regression_prepare_data(test_data)
+                # classification_train_data = self._classification_prepare_data(train_data)
+                # classification_test_data = self._classification_prepare_data(test_data)
                 
                 result_regression = self._task_train(self.regression_models, regression_train_data, regression_test_data)
                 result_classification = self._task_train(self.classification_models, classification_train_data, classification_test_data)
@@ -87,72 +96,4 @@ class Trainer:
                         run_id = mlflow.active_run().info.run_id
                         return f"runs:/{run_id}/model/model.joblib"
                 
-        def _regression_prepare_data(self, data: pd.DataFrame) -> pd.DataFrame:
-                return data
         
-        def _classification_prepare_data(self, data: pd.DataFrame) -> pd.DataFrame:
-                # print("------------------ TEST -----------------")
-                # group_col = "Order ID"
-                # dfg = data.groupby(group_col)
-                # vals = [
-                #         "APAC",
-                #         "US",
-                #         "LATAM",
-                #         "EU",
-                #         "EMEA",
-                #         "Africa",
-                #         "Canada"
-                # ]
-                # print(self._str_get_mode(dfg, "Market"))
-                
-                # result = pd.concat([mode_series, entropy_series, counts_df], axis=1)
-                return data
-        
-        
-        def _aggregate_numbers(self, dfg, num_col: str):
-                """
-                Groups by 'group_col' and returns a DataFrame with:
-                        sum, mean, std, median for 'num_col'
-                """
-                result = dfg[num_col].agg(
-                        [f'sum({num_col})', f'mean({num_col})', f'std({num_col})', f'med({num_col})']
-                ).rename(columns={
-                        f'sum({num_col})': f'sum({num_col})',
-                        f'mean({num_col})': f'mean({num_col})',
-                        f'std({num_col})': f'std({num_col})',
-                        f'med({num_col})': f'med({num_col})'
-                })
-                # Note: pandas .agg automatically names columns, but we keep it explicit.
-                return result
-        
-        def _str_get_mode(self, dfg, str_col: str) -> pd.Series:
-                mode_series = dfg[str_col].apply(lambda x: x.mode()[0] if not x.mode().empty else np.nan)
-                mode_series.name = f'mode({str_col})'
-                return mode_series
-        
-        def _str_get_entropy(self, dfg, str_col: str) -> pd.Series:
-                entropy_series = dfg[str_col].apply(self._normalized_entropy)
-                entropy_series.name = f'Normalized Entropy({str_col})'
-                return entropy_series
-        
-        def _str_get_repeat(self, dfg, str_col: str, categories: list[str]):
-                #    unstack to get categories as columns, fill missing with 0
-                counts_df = dfg[str_col].value_counts().unstack(fill_value=0)
-                # Ensure all categories exist (reindex with the provided list)
-                counts_df = counts_df.reindex(columns=categories, fill_value=0)
-                # Rename columns to numberOfRep(cat)
-                counts_df.columns = [f'numberOfRep({cat})' for cat in categories]
-                return counts_df
-        
-        def _normalized_entropy(self, series: pd.Series):
-                n = len(series)
-                if n == 0:
-                        return np.nan
-                counts = series.value_counts()
-                k = len(counts)                     # number of unique categories
-                if k <= 1:
-                        return 0.0
-                probs = counts / n
-                entropy = -sum(p * np.log(p) for p in probs)
-                max_entropy = np.log(k)
-                return entropy / max_entropy
