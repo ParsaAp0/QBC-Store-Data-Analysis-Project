@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
+from sklearn.model_selection import GridSearchCV
 from ..interface import model_interface
 from .regression_grader import RegressionGrader
 from pathlib import Path
@@ -28,9 +29,8 @@ class SimpleRegressionModel(model_interface):
 
                 # Default hyperparameters
                 self.target_column = target_feature
-                self.ridge_alpha = 1.0
-                self.polynomial_degree = 3
-
+                self._load_best_params()
+                
                 # Model
                 self.model = Ridge(alpha=self.ridge_alpha)
 
@@ -98,12 +98,103 @@ class SimpleRegressionModel(model_interface):
 
                 return score
 
+        # def tune(self, train_data: pd.DataFrame) -> dict:
+        #         with all_params_path.open("r") as file:
+        #                 parameter_grid = json.load(file)
+        #         print(json.dumps(parameter_grid, indent=4))
+        #         # print("TEST")
+        #         return {}
+        
         def tune(self, train_data: pd.DataFrame) -> dict:
                 with all_params_path.open("r") as file:
-                        parameter_grid = json.load(file)
-                print(json.dumps(parameter_grid, indent=4))
-                # print("TEST")
-                return {}
+                        parameters = json.load(file)
+
+                ridge_alphas = parameters["ridge_alpha"]
+                polynomial_degrees = parameters["polynomial_degree"]
+
+                # Prepare original data
+                X, y = self._prepare_data(train_data)
+
+                # Feature engineering
+                X = self._feature_engineering(X)
+
+                # Encode categorical features
+                X = self._encode_features(X, fit=True)
+
+                # Search
+                best_score = float("inf")
+                best_parameters = {}
+
+                for degree in polynomial_degrees:
+                        # Polynomial features
+                        polynomial_features = PolynomialFeatures(
+                                degree=degree,
+                                include_bias=False,
+                        )
+
+                        numeric_columns = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+                        other_columns = [column for column in X.columns if column not in numeric_columns]
+                        numeric_data = X[numeric_columns]
+
+                        polynomial_data = (polynomial_features.fit_transform(numeric_data))
+                        polynomial_columns = polynomial_features.get_feature_names_out(numeric_columns)
+
+                        polynomial_dataframe = pd.DataFrame(
+                                polynomial_data,
+                                columns=polynomial_columns,
+                                index=X.index,
+                        )
+
+                        if other_columns:
+                                X_degree = pd.concat([polynomial_dataframe, X[other_columns]], axis=1)
+                        else:
+                                X_degree = polynomial_dataframe
+
+                        # Scaling
+                        scaler = StandardScaler()
+                        X_degree = scaler.fit_transform(X_degree)
+
+                        # GridSearchCV
+                        grid = GridSearchCV(
+                                estimator=Ridge(),
+                                param_grid={"alpha": ridge_alphas},
+                                scoring="neg_root_mean_squared_error",
+                                cv=5,
+                                n_jobs=3,
+                                verbose=10
+                        )
+
+                        grid.fit(X_degree, y)
+                        current_score = -grid.best_score_
+
+                        print(
+                                f"Degree: {degree}, "
+                                f"Best alpha: {grid.best_params_['alpha']}, "
+                                f"RMSE: {current_score}"
+                        )
+
+                        # Keep global best
+                        if current_score < best_score:
+                                best_score = current_score
+                                best_parameters = {
+                                        "ridge_alpha": grid.best_params_["alpha"],
+                                        "polynomial_degree": degree,
+                                }
+
+                # Save best parameters
+
+                with best_params_path.open("w") as file:
+                        json.dump(
+                                best_parameters,
+                                file,
+                                indent=4,
+                        )
+
+                print("------------ tuning result ------------")
+                print(f"Best parameters: {best_parameters}")
+                print(f"Best CV RMSE: {best_score}")
+
+                return best_parameters
         
         def get_parameters(self) -> dict:
                 return {
@@ -191,3 +282,16 @@ class SimpleRegressionModel(model_interface):
                         return pd.concat([polynomial_dataframe, data[other_columns]], axis=1)
 
                 return polynomial_dataframe
+        
+        def _load_best_params(self):
+                # Default values:
+                self.ridge_alpha = 1
+                self.polynomial_degree = 3
+                
+                if not best_params_path.exists():
+                        return
+                
+                with best_params_path.open("r") as file:
+                        parameters = json.load(file)
+                self.ridge_alpha = parameters.get("ridge_alpha", self.ridge_alpha)
+                self.polynomial_degree = parameters.get("polynomial_degree", self.polynomial_degree)
