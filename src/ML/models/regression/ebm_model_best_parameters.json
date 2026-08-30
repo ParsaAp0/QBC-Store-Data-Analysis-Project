@@ -1,0 +1,5 @@
+{
+  "max_bins": 512,
+  "max_interactions": 5,
+  "learning_rate": 0.03
+}

@@ -15,9 +15,6 @@
                 "Row ID": "int64",
                 "Ship Date": "str",
                 "Ship Mode": "str",
-                "City": "str",
-                "State": "str",
-                "Country": "str",
                 "Region": "str"
         },
         "DimCustomer": {
@@ -30,5 +27,15 @@
                 "Product Name": "str",
                 "Category": "str",
                 "Sub-Category": "str"
+        },
+        "DimGeography": {
+                "Id": "int64",
+                "Key": "str",
+                "Lat": "float64",
+                "Lng": "float64",
+                "Country": "str",
+                "State": "str",
+                "City": "str",
+                "City ASCII": "str"
         }
 }

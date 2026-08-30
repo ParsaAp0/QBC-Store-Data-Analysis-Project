@@ -1,6 +1,9 @@
 from data.DataLoader import DataLoader
 from models.trainer import Trainer
-from models.regression.example_model import SimpleRegressionModel
+from models.regression.regression_model import RegressionModel
+from models.regression.xgboost_model import XGBoostModel
+from models.regression.svr import SVRModel
+from models.regression.ebm_model import EBMModel
 from models.comparator import ModelComparator
 from models.selector import ModelSelector
 import json
@@ -26,9 +29,10 @@ if __name__ == "__main__":
         
         trainer = Trainer(
                 regression_models=[
-                        SimpleRegressionModel(),
-                        # XGBoostClassifier(),
-                        # RandomForestRegressor(),
+                        RegressionModel(),
+                        XGBoostModel(),
+                        SVRModel(),
+                        EBMModel()
                 ],
                 classification_models=[
                         
@@ -43,9 +47,6 @@ if __name__ == "__main__":
                 classification_train_data = classification_train_df,
                 classification_test_data = classification_test_df
         )
-
-
-        
         
         metrics = {
                 "classification": "f1",

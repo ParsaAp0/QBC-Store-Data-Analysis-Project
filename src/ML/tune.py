@@ -1,8 +1,8 @@
 from data.DataLoader import DataLoader
 from models.tuner import Tuner
-from models.regression.example_model import SimpleRegressionModel
-from models.comparator import ModelComparator
-from models.selector import ModelSelector
+from models.regression.regression_model import RegressionModel
+from models.regression.xgboost_model import XGBoostModel
+from models.regression.ebm_model import EBMModel
 import json
 
 if __name__ == "__main__":
@@ -26,9 +26,9 @@ if __name__ == "__main__":
         
         tuner = Tuner(
                 regression_models=[
-                        SimpleRegressionModel(),
-                        # XGBoostClassifier(),
-                        # RandomForestRegressor(),
+                        # RegressionModel(),
+                        # XGBoostModel(),
+                        # EBMModel(), --> too long! 
                 ],
                 classification_models=[
                         

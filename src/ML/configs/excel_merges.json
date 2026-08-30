@@ -1,12 +1,20 @@
 [
         {
                 "right": "DimCustomer",
-                "on": "Customer ID",
+                "left_on": "Customer ID",
+                "right_on": "Customer ID",
                 "how": "left"
         },
         {
                 "right": "DimProduct",
-                "on": "Product ID",
+                "left_on": "Product ID",
+                "right_on": "Product ID",
+                "how": "left"
+        },
+        {
+                "right": "DimGeography",
+                "left_on": "Geography Key",
+                "right_on": "Key",
                 "how": "left"
         }
 ]

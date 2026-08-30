@@ -1,5 +1,6 @@
 [
         "FactOrder",
         "DimCustomer",
-        "DimProduct"
+        "DimProduct",
+        "DimGeography"
 ]

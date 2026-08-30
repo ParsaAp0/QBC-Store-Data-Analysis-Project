@@ -1,0 +1,9 @@
+{
+    "task": "regression",
+    "metric": "rmse",
+    "metric_value": 83.86513663109321,
+    "model_name": "XGBoost Regression",
+    "model_version": "2026.08.30.190114",
+    "run_id": "fb1806c8d92e48979285ac3ccdc86d8d",
+    "model_uri": "runs:/fb1806c8d92e48979285ac3ccdc86d8d/model/model.joblib"
+}

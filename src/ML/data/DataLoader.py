@@ -211,6 +211,7 @@ class DataLoader:
                                 # -------------------------------------------------
                                 # Null validation
                                 # -------------------------------------------------
+                                dataframe.dropna(inplace=True)
                                 if dataframe[column_name].isna().any():
                                         null_count = int(dataframe[column_name].isna().sum())
 
@@ -318,7 +319,8 @@ class DataLoader:
 
                         dataframe = dataframe.merge(
                                 self._sheets[right_name],
-                                on=merge["on"],
+                                left_on=merge["left_on"],
+                                right_on=merge["right_on"],
                                 how=merge["how"],
                         )
 
@@ -343,26 +345,30 @@ class DataLoader:
                 """
                 Split the merged dataframe into train and test sets.
                 """
-
-                if self._dataframe is None:
-                        raise RuntimeError(
-                                "No merged dataframe exists. Call load() first."
-                        )
                         
-                gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-                train_idx, test_idx = next(gss.split(self._dataframe, groups=self._dataframe[order_column_name]))
-                train_dataframe = self._dataframe.iloc[train_idx]
-                test_dataframe = self._dataframe.iloc[test_idx]
+                if self._dataframe is None:
+                        raise RuntimeError("No merged dataframe exists. Call load() first.")
+
+                # 1. CRITICAL: Sort by Order Date (Oldest to Newest)
+                self._dataframe = self._dataframe.sort_values(by="Order Date").reset_index(drop=True)
+
+                # 2. Find the cut-off point (80% of the chronological data)
+                split_idx = int(len(self._dataframe) * self.train_test_split_percentage)
+
+                # 3. Split by position (No randomness!)
+                train_dataframe = self._dataframe.iloc[:split_idx]
+                test_dataframe = self._dataframe.iloc[split_idx:]
+
                 self._train_dataframe = train_dataframe.reset_index(drop=True)
                 self._test_dataframe = test_dataframe.reset_index(drop=True)
-                
-                
-                if (self.classification_data is not None):
-                        
-                        gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-                        train_idx, test_idx = next(gss.split(self.classification_data, groups=self.classification_data[order_column_name]))
-                        train_dataframe = self.classification_data.iloc[train_idx]
-                        test_dataframe = self.classification_data.iloc[test_idx]
+
+                # If you have classification data, do the exact same thing:
+                if self.classification_data is not None:
+                        # Ensure classification data is also sorted consistently with the main df
+                        # Since it shares the same index, just use the same split_idx
+                        self.classification_data = self.classification_data.sort_values(by="Order Date").reset_index(drop=True)
+                        train_dataframe = self.classification_data.iloc[:split_idx]
+                        test_dataframe = self.classification_data.iloc[split_idx:]
                         self._classification_train_dataframe = train_dataframe.reset_index(drop=True)
                         self._classification_test_dataframe = test_dataframe.reset_index(drop=True)
 
