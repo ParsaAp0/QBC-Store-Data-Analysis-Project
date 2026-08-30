@@ -1,0 +1,15 @@
+artifact_uri: ./mlruns/1/95a91e62143941599b802a7f16a15ed2/artifacts
+end_time: 1788108703007
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: active
+name: ''
+run_id: 95a91e62143941599b802a7f16a15ed2
+run_uuid: 95a91e62143941599b802a7f16a15ed2
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1788108698858
+status: 3
+tags: []
+user_id: Parsa
