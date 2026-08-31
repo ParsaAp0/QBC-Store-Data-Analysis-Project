@@ -3,6 +3,7 @@ from models.tuner import Tuner
 from models.regression.regression_model import RegressionModel
 from models.regression.xgboost_model import XGBoostModel
 from models.regression.ebm_model import EBMModel
+from models.classification.logistic_regression_model import LogisticRegressionModel
 import json
 
 if __name__ == "__main__":
@@ -31,7 +32,7 @@ if __name__ == "__main__":
                         # EBMModel(), --> too long! 
                 ],
                 classification_models=[
-                        
+                        LogisticRegressionModel(),
                 ]
         )
 

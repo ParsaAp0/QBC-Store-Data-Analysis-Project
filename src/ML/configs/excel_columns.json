@@ -15,7 +15,8 @@
                 "Row ID": "int64",
                 "Ship Date": "str",
                 "Ship Mode": "str",
-                "Region": "str"
+                "Region": "str",
+                "Geography Key": "str"
         },
         "DimCustomer": {
                 "Customer ID": "str",

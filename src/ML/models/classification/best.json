@@ -1,0 +1,9 @@
+{
+    "task": "classification",
+    "metric": "f1",
+    "metric_value": 0.5169168579455574,
+    "model_name": "Logistic Regression",
+    "model_version": "2026.08.31.173254",
+    "run_id": "c07209f2f68b4976a1f230752034a35e",
+    "model_uri": "runs:/c07209f2f68b4976a1f230752034a35e/model/model.joblib"
+}

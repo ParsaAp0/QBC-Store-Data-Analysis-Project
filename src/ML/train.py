@@ -3,6 +3,7 @@ from models.trainer import Trainer
 from models.regression.regression_model import RegressionModel
 from models.regression.xgboost_model import XGBoostModel
 from models.regression.svr import SVRModel
+from models.classification.logistic_regression_model import LogisticRegressionModel
 from models.regression.ebm_model import EBMModel
 from models.comparator import ModelComparator
 from models.selector import ModelSelector
@@ -35,7 +36,7 @@ if __name__ == "__main__":
                         EBMModel()
                 ],
                 classification_models=[
-                        
+                        LogisticRegressionModel()
                 ]
         )
 

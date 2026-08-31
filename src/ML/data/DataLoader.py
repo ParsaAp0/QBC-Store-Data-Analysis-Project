@@ -308,7 +308,7 @@ class DataLoader:
                         raise KeyError(
                                 "self.main_sheet must be present in excel_sheets."
                         )
-
+                
                 dataframe = self._sheets[self.main_sheet].copy()
                 for merge in self.merges:
                         right_name = merge["right"]
@@ -316,16 +316,18 @@ class DataLoader:
                                 raise KeyError(
                                         f"Sheet '{right_name}' was not loaded."
                                 )
-
+                        
+                        dataframe[merge["left_on"]] = dataframe[merge["left_on"]].str.lower().str.strip()
+                        self._sheets[right_name][merge["right_on"]] = self._sheets[right_name][merge["right_on"]].str.lower().str.strip()
+                                
                         dataframe = dataframe.merge(
                                 self._sheets[right_name],
                                 left_on=merge["left_on"],
                                 right_on=merge["right_on"],
                                 how=merge["how"],
                         )
-
-                self._dataframe = dataframe
-
+                self._dataframe = dataframe.dropna()
+                
         def _prepare_data(self) -> None:
                 self._regression_train_dataframe = self._regression_prepare_data(self._train_dataframe)
                 self._regression_test_dataframe = self._regression_prepare_data(self._test_dataframe)
@@ -361,14 +363,16 @@ class DataLoader:
 
                 self._train_dataframe = train_dataframe.reset_index(drop=True)
                 self._test_dataframe = test_dataframe.reset_index(drop=True)
-
+                
                 # If you have classification data, do the exact same thing:
                 if self.classification_data is not None:
                         # Ensure classification data is also sorted consistently with the main df
                         # Since it shares the same index, just use the same split_idx
                         self.classification_data = self.classification_data.sort_values(by="Order Date").reset_index(drop=True)
-                        train_dataframe = self.classification_data.iloc[:split_idx]
-                        test_dataframe = self.classification_data.iloc[split_idx:]
+                        class_split_idx = int(len(self.classification_data) * self.train_test_split_percentage)
+                        train_dataframe = self.classification_data.iloc[:class_split_idx]
+                        test_dataframe = self.classification_data.iloc[class_split_idx:]
+                        
                         self._classification_train_dataframe = train_dataframe.reset_index(drop=True)
                         self._classification_test_dataframe = test_dataframe.reset_index(drop=True)
 
@@ -431,9 +435,7 @@ class DataLoader:
                 state = self._str_get_mode(dfg, "State", "State")
                 country = self._str_get_mode(dfg, "Country", "Country")
                 region = self._str_get_mode(dfg, "Region", "Region")
-                # market_repeat = self._str_get_repeat(dfg, "Market", market_vals)
-                # market_entropy = self._str_get_entropy(dfg, "Market")
-                market_mode = self._str_get_mode(dfg, "Market")
+                market_mode = self._str_get_mode(dfg, "Market", "Market")
                 sales_cols = self._aggregate_numbers(dfg, "Sales")
                 quantity_cols = self._aggregate_numbers(dfg, "Quantity")
                 discount_cols = self._aggregate_numbers(dfg, "Discount")
@@ -441,11 +443,7 @@ class DataLoader:
                 category_repeat = self._str_get_repeat(dfg, "Category", category_vals)
                 category_entropy = self._str_get_entropy(dfg, "Category")
                 category_mode = self._str_get_mode(dfg, "Category")
-                ship_mode = self._str_get_mode(dfg, "Ship Mode")
-                
-                
-                # print(pd.concat([d1, d2, d3], axis=1))
-                # print(self._aggregate_numbers(dfg, "Sales"))
+                ship_mode = self._str_get_mode(dfg, "Ship Mode", "Ship Mode")
                 
                 result = pd.concat([
                         customer_id,
