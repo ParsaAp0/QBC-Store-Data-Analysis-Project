@@ -1,0 +1,15 @@
+artifact_uri: ./mlruns/1/8418b7c6556746f7b846c55d33f1dc16/artifacts
+end_time: 1788248060156
+entry_point_name: ''
+experiment_id: '1'
+lifecycle_stage: active
+name: ''
+run_id: 8418b7c6556746f7b846c55d33f1dc16
+run_uuid: 8418b7c6556746f7b846c55d33f1dc16
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1788248059359
+status: 3
+tags: []
+user_id: Sajjad
