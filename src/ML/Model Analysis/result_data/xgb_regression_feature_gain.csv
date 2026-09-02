@@ -1,16 +1,16 @@
 ,0
-Sub-Category_Binders,18288.078125
-Region_Southeast Asia,21343.951171875
-Market_EMEA,23016.5234375
-Market_LATAM,23955.466796875
-Market_US,25149.271484375
-Region_East,26317.845703125
-Category_Furniture,27058.08203125
-Region_Oceania,29708.01953125
-Sub-Category_Tables,30478.365234375
-Order Priority_High,31665.90625
-Sub-Category_Appliances,33297.984375
-Order Priority_Medium,34624.98828125
-Total_Discounted_Sales,50171.3203125
-Sales,221744.375
-Discount,454088.09375
+Sales_per_Quantity,17684.40234375
+Sub-Category_Binders,17825.1953125
+Order Day Of Month,18387.537109375
+Market_LATAM,20766.640625
+Order Year,20882.794921875
+Region_Southeast Asia,21583.533203125
+Market_US,22273.298828125
+Category_Furniture,23153.431640625
+Segment_Consumer,24504.4921875
+Sub-Category_Tables,25719.55078125
+Region_North,28650.3828125
+Region_East,38560.0546875
+Sales,156656.1875
+Discounted_Sales,221961.734375
+Discount,455660.875
