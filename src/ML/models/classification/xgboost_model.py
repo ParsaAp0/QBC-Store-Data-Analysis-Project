@@ -2,7 +2,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling  import SVMSMOTE
 from sklearn.preprocessing import OneHotEncoder, RobustScaler, LabelEncoder
 from sklearn.model_selection import GridSearchCV, train_test_split
 from ..interface import model_interface
@@ -53,6 +53,7 @@ class XGBClassifierModel(model_interface):
 			random_state=100,
 			verbosity=0
 		)
+		self.smote = SVMSMOTE(random_state=42)
 
 		self.label_encoder = LabelEncoder()
 		self.encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
@@ -77,7 +78,8 @@ class XGBClassifierModel(model_interface):
 			random_state=42, 
 			shuffle=False
 		)
-		self.model.fit(X_train, y_train, eval_set = [(X_val, y_val)], verbose=False)
+		X_res, y_res = self.smote.fit_resample(X_train, y_train)
+		self.model.fit(X_res, y_res, eval_set = [(X_val, y_val)], verbose=False)
 		self.is_trained = True
 
 		predictions = self.model.predict(X)
@@ -133,6 +135,9 @@ class XGBClassifierModel(model_interface):
     			train_size=0.8
    			)
    
+			smote = SVMSMOTE(random_state=42)
+			X_res, y_res = smote.fit_resample(X_train, y_train)
+   
 			grid = GridSearchCV(
 				estimator=XGBClassifier(
 					random_state=42,
@@ -149,7 +154,7 @@ class XGBClassifierModel(model_interface):
 				error_score=0.0
 			)
 			grid.fit(
-				X_train, self.label_encoder.fit_transform(y_train),
+				X_res, self.label_encoder.fit_transform(y_res),
 				eval_set=[(X_val, self.label_encoder.fit_transform(y_val))],
 				verbose=False
 			)

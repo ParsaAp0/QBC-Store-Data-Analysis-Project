@@ -1,9 +1,9 @@
 {
     "task": "classification",
     "metric": "f1",
-    "metric_value": 0.5184289455348648,
-    "model_name": "XGBoost Classifier",
-    "model_version": "2026.09.02.182644",
-    "run_id": "207760b4f8654bbf9843176eaedf1f8d",
-    "model_uri": "runs:/207760b4f8654bbf9843176eaedf1f8d/model/model.joblib"
+    "metric_value": 0.8282573593344039,
+    "model_name": "XGBoost Binary Classifier",
+    "model_version": "2026.09.02.220533",
+    "run_id": "29dba6babb19478db09aa148b8f4cfae",
+    "model_uri": "runs:/29dba6babb19478db09aa148b8f4cfae/model/model.joblib"
 }

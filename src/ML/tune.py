@@ -5,8 +5,8 @@ from models.regression.xgboost_model import XGBRegressorModel
 from models.regression.svr_model import SVRModel
 from models.regression.ebm_model import EBMModel
 from models.classification.logistic_regression_model import LogisticRegressionModel
-from models.classification.xgboost_model import XGBClassifierModel
-from models.classification.svc_model import SVCModel
+from models.classification.decision_tree_model import DecisionTreeModel
+from models.regression.svr_model import SVRModel
 from models.comparator import ModelComparator
 from models.selector import ModelSelector
 import json
@@ -40,6 +40,7 @@ if __name__ == "__main__":
         classification_models=[
             # LogisticRegressionModel(),
             XGBClassifierModel(),
+            # DecisionTreeModel(),
             # SVCModel()
         ]
     )

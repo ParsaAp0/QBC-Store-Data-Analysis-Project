@@ -32,7 +32,7 @@ input_columns = [
 all_params_path = Path("src/ML/models/classification/svc_all_parameters.json")
 best_params_path = Path("src/ML/models/classification/svc_best_parameters.json")
 
-class SVCModel(model_interface):
+class SVCClassifierModel(model_interface):
     def __init__(self):
         super().__init__("Support Vector Classifier", "classification")
 

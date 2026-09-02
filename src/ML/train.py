@@ -1,10 +1,16 @@
 from data.DataLoader import DataLoader
 from models.trainer import Trainer
+
 from models.regression.regression_model import RegressionModel
-from models.regression.xgboost_model import XGBoostModel
+from models.regression.xgboost_model import XGBRegressorModel
 from models.regression.svr_model import SVRModel
-from models.classification.logistic_regression_model import LogisticRegressionModel
 from models.regression.ebm_model import EBMModel
+
+from models.classification.logistic_regression_model import LogisticRegressionModel
+from models.classification.xgboost_model import XGBClassifierModel
+from models.classification.decision_tree_model import DecisionTreeModel
+from models.classification.svc_model import SVCClassifierModel
+
 from models.comparator import ModelComparator
 from models.selector import ModelSelector
 import json
@@ -30,13 +36,16 @@ if __name__ == "__main__":
         
         trainer = Trainer(
                 regression_models=[
-                        RegressionModel(),
-                        XGBoostModel(),
-                        SVRModel(),
-                        EBMModel()
+                        # RegressionModel(),
+                        # XGBRegressorModel(),
+                        # SVRModel(),
+                        # EBMModel()
                 ],
                 classification_models=[
-                        LogisticRegressionModel()
+                        # LogisticRegressionModel(),
+                        XGBClassifierModel(),
+                        # DecisionTreeModel()
+                        # SVCClassifierModel()
                 ]
         )
 
