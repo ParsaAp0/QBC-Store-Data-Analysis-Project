@@ -1,36 +1,39 @@
 from pathlib import Path
-from sklearn.model_selection import GroupShuffleSplit
 import numpy as np
 import pandas as pd
 import json
 
-excel_sheets_config = "src/ML/configs/excel_sheets.json"
-merges_config = "src/ML/configs/excel_merges.json"
-validation_columns = "src/ML/configs/excel_columns.json"
+PROJECT_DIR = Path(__file__).parent.parent.parent.parent
+BASE_DIR = Path(__file__).parent.parent
+CONFIG_DIR = BASE_DIR / 'configs'
+
+excel_sheets_config = CONFIG_DIR / 'excel_sheets.json'
+merges_config = CONFIG_DIR / 'excel_merges.json'
+validation_columns = CONFIG_DIR / 'excel_columns.json'
 order_column_name = "Order ID"
 
 
 class DataLoader:
 	def __init__(
-			self,
-			excel_location: str | Path,
-			classification_excel_location: str | Path | None,
-			train_test_split_percentage: float,
-			random_state: int = 42,
+		self,
+		excel_location: str | Path,
+		classification_excel_location: str | Path | None,
+		train_test_split_percentage: float,
+		random_state: int = 42,
 	):
-		self.excel_location = Path(excel_location)
+		self.excel_location = Path(PROJECT_DIR / excel_location)
 		if (classification_excel_location is None):
-			self.classification_excel_location = None
+				self.classification_excel_location = None
 		else:
-			self.classification_excel_location = Path(
-				classification_excel_location)
+				self.classification_excel_location = Path(
+					PROJECT_DIR / classification_excel_location)
 		self.train_test_split_percentage = train_test_split_percentage
 		with open(excel_sheets_config, 'r') as file:
-			self.excel_sheets = json.load(file)
+				self.excel_sheets = json.load(file)
 		with open(merges_config, 'r') as file:
-			self.merges = json.load(file)
+				self.merges = json.load(file)
 		with open(validation_columns, 'r') as file:
-			self.validation_columns = json.load(file)
+				self.validation_columns = json.load(file)
 		self.main_sheet = self.excel_sheets[0]
 		self.random_state = random_state
 
@@ -67,15 +70,15 @@ class DataLoader:
 		Validate the loaded Excel sheets.
 
 		Validation rules:
-				1. All expected columns must exist.
-				2. Column types must match the expected types.
-				If a type is incorrect, an attempt is made to convert it.
-				3. No null values are allowed.
+			1. All expected columns must exist.
+			2. Column types must match the expected types.
+			If a type is incorrect, an attempt is made to convert it.
+			3. No null values are allowed.
 
 		Returns:
-				tuple[bool, str]:
-						A boolean indicating whether validation passed and
-						a human-readable validation log.
+			tuple[bool, str]:
+				A boolean indicating whether validation passed and
+				a human-readable validation log.
 		"""
 
 		errors: list[str] = []
@@ -519,9 +522,9 @@ class DataLoader:
 		entropy_series = df_grouped[str_col].apply(self._normalized_entropy)
 
 		if column_name == None:
-			entropy_series.name = f'{str_col}_entropy'
+				entropy_series.name = f'{str_col}_entropy'
 		else:
-			entropy_series.name = column_name
+				entropy_series.name = column_name
 		return entropy_series
 
 	def _str_get_repeat(self, df_grouped, str_col: str, categories: list[str]):
@@ -536,11 +539,11 @@ class DataLoader:
 	def _normalized_entropy(self, series: pd.Series):
 		n = len(series)
 		if n == 0:
-			return np.nan
+				return np.nan
 		counts = series.value_counts()
-		k = len(counts)					 # number of unique categories
+		k = len(counts)                                         # number of unique categories
 		if k <= 1:
-			return 0.0
+				return 0.0
 		probs = counts / n
 		entropy = -sum(p * np.log(p) for p in probs)
 		max_entropy = np.log(k)
