@@ -1,9 +1,9 @@
 {
     "task": "classification",
     "metric": "f1",
-    "metric_value": 0.5169168579455574,
-    "model_name": "Logistic Regression",
-    "model_version": "2026.08.31.173254",
-    "run_id": "c07209f2f68b4976a1f230752034a35e",
-    "model_uri": "runs:/c07209f2f68b4976a1f230752034a35e/model/model.joblib"
+    "metric_value": 0.5184289455348648,
+    "model_name": "XGBoost Classifier",
+    "model_version": "2026.09.02.182644",
+    "run_id": "207760b4f8654bbf9843176eaedf1f8d",
+    "model_uri": "runs:/207760b4f8654bbf9843176eaedf1f8d/model/model.joblib"
 }

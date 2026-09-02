@@ -69,12 +69,19 @@ class XGBClassifierModel(model_interface):
 		X = self._feature_engineering(X)
 		X = self._encode_features(X, fit=True)
 		X = self.scaler.fit_transform(X)
-
-		self.model.fit(X, self.label_encoder.fit_transform(y))
+		y = self.label_encoder.fit_transform(y)
+  
+		X_train, X_val, y_train, y_val = train_test_split(
+			X, y, 
+			test_size=0.2, 
+			random_state=42, 
+			shuffle=False
+		)
+		self.model.fit(X_train, y_train, eval_set = [(X_val, y_val)], verbose=False)
 		self.is_trained = True
 
 		predictions = self.model.predict(X)
-		score = self.grader.score(y.to_numpy(), predictions)
+		score = self.grader.score(y, predictions)
 		return score
 
 	def predict(self, test_data: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
