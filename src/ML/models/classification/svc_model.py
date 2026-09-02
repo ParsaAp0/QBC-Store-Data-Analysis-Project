@@ -1,59 +1,61 @@
 from typing import Any
 import numpy as np
 import pandas as pd
-from sklearn.svm import SVR
+from sklearn.svm import SVC
 from sklearn.preprocessing import OneHotEncoder, RobustScaler
 from ..interface import model_interface
 from sklearn.model_selection import GridSearchCV
-from .regression_grader import RegressionGrader
+from .classification_grader import ClassificationGrader
 from pathlib import Path
 import json
 
-target_feature = "Profit"
-
+target_feature = "Ship Mode"
 input_columns = [
-    "Sales",
-    "Quantity",
-    "Discount",
-    "Shipping Cost",
-    "Order Priority",
-	"Market",
-	"Region",
 	"Segment",
-	"Ship Mode",
-	"Category",
-	"Sub-Category",
+	"Order Priority",
 	"Order Date",
-	"Ship Date",
-    "Profit",
+	"Region",
+	"Market",
+	"Total_Sales",
+	"Total_Quantity",
+	"Total_Profit",
+	"Discount_Amount",
+	"Sales_Per_Item",
+	"Profit_Per_Item",
+	"Category=Office Supplies",
+	"Category=Technology",
+	"Category=Furniture",
+	"Category_mode",
+	"Ship Mode"
 ]
 
-all_params_path = Path("src/ML/models/regression/svr_all_parameters.json")
-best_params_path = Path("src/ML/models/regression/svr_best_parameters.json")
+all_params_path = Path("src/ML/models/classification/svc_all_parameters.json")
+best_params_path = Path("src/ML/models/classification/svc_best_parameters.json")
 
-class SVRModel(model_interface):
+class SVCModel(model_interface):
     def __init__(self):
-        super().__init__("Support Vector Regressor", "regression")
+        super().__init__("Support Vector Classifier", "classification")
 
         # Default hyperparameters
         self.target_column = target_feature
         self._load_best_params()
 
         # Model
-        self.model = SVR(
+        self.model = SVC(
             kernel=self.kernel,
             degree=self.degree,
             C=self.C,
-            epsilon=self.epsilon
         )
 
         # Preprocessing
         self.encoder = OneHotEncoder(
-            handle_unknown="ignore", sparse_output=False)
+            handle_unknown="ignore", 
+            sparse_output=False
+        )
         self.scaler = RobustScaler()
 
         # Grader
-        self.grader = RegressionGrader()
+        self.grader = ClassificationGrader()
 
         # Training state
         self.numeric_columns: list[str] = []
@@ -134,7 +136,7 @@ class SVRModel(model_interface):
             for kernel in kernels:
                 # GridSearchCV
                 grid = GridSearchCV(
-                    estimator=SVR(),
+                    estimator=SVC(),
                     param_grid=kernel,
                     scoring="neg_root_mean_squared_error",
                     cv=5,
@@ -188,9 +190,8 @@ class SVRModel(model_interface):
             "target_column": self.target_column,
             "kernel": self.kernel,
             "degree": self.degree,
-            "coef0": self.coef0,
             "C": self.C,
-            "epsilon": self.epsilon
+            "coef0": self.coef0
         }
 
     def _prepare_data(self, data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
@@ -225,36 +226,22 @@ class SVRModel(model_interface):
 
     def _feature_engineering(self, data: pd.DataFrame) -> pd.DataFrame:
         data = data.copy()
-
-        # Example feature engineering.
-        #
-        # Add domain-specific features here.
-        # The function must return a DataFrame.
-
-        # Process numeric columns
-        data["Sales_per_Quantity"] = data["Sales"] / data["Quantity"].replace(0, np.nan)
-        data["Discounted_Sales"] = data["Sales"] * (1 - data["Discount"])
-        data["Shipping_Cost_per_Unit"] = data["Shipping Cost"] / data["Quantity"].replace(0, np.nan)
-        data["Shipping_Cost_per_Sales"] = data["Shipping Cost"] / data["Sales"].replace(0, np.nan)
-
+          
         # Process date columns
         data['Order Date'] = pd.to_datetime(data['Order Date'])
-        data['Ship Date'] = pd.to_datetime(data['Ship Date'])
-        data['Order Processing Days'] = (data['Ship Date'] - data['Order Date']).dt.days
         data['Order Day Of Month'] = data['Order Date'].dt.day
         data['Order Day Of Week'] = data['Order Date'].dt.day_of_week
         data['Order Month'] = data['Order Date'].dt.month
         data['Order Year'] = data['Order Date'].dt.year
-
+    
         # Droping unwanted columns
-        data.drop(columns=['Order Date', 'Ship Date'], inplace=True)
-
+        data.drop(columns=['Order Date'], inplace=True)
+    
         return data
 
     def _scaling(self, data: pd.DataFrame, numeric_cols, other_cols) -> pd.DataFrame:	
-        scaler = RobustScaler()
         data_scaled = pd.DataFrame(
-			scaler.fit_transform(data[numeric_cols]), 
+			self.scaler.fit_transform(data[numeric_cols]), 
 			columns = numeric_cols,
 			index = data.index
 		)
@@ -299,15 +286,14 @@ class SVRModel(model_interface):
         kernel = 'rbf'
         degree = 3
         C = 1
+        coef0 = 1
         coef0 = 1.0
-        epsilon = 1
 
         if not best_params_path.exists():
             self.kernel = kernel
             self.degree = degree
             self.C = C
             self.coef0 = coef0
-            self.epsilon = epsilon
 
         with best_params_path.open("r") as file:
             parameters = json.load(file)
@@ -315,4 +301,3 @@ class SVRModel(model_interface):
             self.degree = parameters.get("degree", degree)
             self.C = parameters.get("C", C)
             self.coef0 = parameters.get("coef0", coef0)
-            self.epsilon = parameters.get("epsilon", epsilon)

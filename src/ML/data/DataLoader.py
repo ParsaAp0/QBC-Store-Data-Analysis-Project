@@ -321,10 +321,15 @@ class DataLoader:
 					f"Sheet '{right_name}' was not loaded."
 				)
 
-			dataframe[merge["left_on"]] = dataframe[merge["left_on"]
-													].str.lower().str.strip()
-			self._sheets[right_name][merge["right_on"]
-									 ] = self._sheets[right_name][merge["right_on"]].str.lower().str.strip()
+			if dataframe[merge["left_on"]].dtype == str:
+				dataframe[merge["left_on"]] = \
+					dataframe[merge["left_on"]].str.lower().str.strip()
+				self._sheets[right_name][merge["right_on"]] = \
+					self._sheets[right_name][merge["right_on"]].str.lower().str.strip()
+			else:
+				dataframe[merge["left_on"]] = dataframe[merge["left_on"]]
+				self._sheets[right_name][merge["right_on"]] = \
+        			self._sheets[right_name][merge["right_on"]]
 
 			dataframe = dataframe.merge(
 				self._sheets[right_name],
@@ -335,15 +340,15 @@ class DataLoader:
 		self._dataframe = dataframe.dropna()
 
 	def _prepare_data(self) -> None:
-		self._regression_train_dataframe = self._regression_prepare_data(
-			self._train_dataframe)
-		self._regression_test_dataframe = self._regression_prepare_data(
-			self._test_dataframe)
+		self._regression_train_dataframe = \
+      		self._regression_prepare_data(self._train_dataframe)
+		self._regression_test_dataframe = \
+      		self._regression_prepare_data(self._test_dataframe)
 		if (self.classification_data is None):
-			self._classification_train_dataframe = self._classification_prepare_data(
-				self._train_dataframe)
-			self._classification_test_dataframe = self._classification_prepare_data(
-				self._test_dataframe)
+			self._classification_train_dataframe = \
+       			self._classification_prepare_data(self._train_dataframe)
+			self._classification_test_dataframe = \
+       			self._classification_prepare_data(self._test_dataframe)
 		else:
 			return
 
