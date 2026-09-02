@@ -2,7 +2,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from xgboost import XGBRegressor
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, RobustScaler
 from sklearn.model_selection import GridSearchCV, train_test_split
 from ..interface import model_interface
 from .regression_grader import RegressionGrader
@@ -127,7 +127,17 @@ class XGBRegressorModel(model_interface):
 
 		# Prepare original data
 		X, y = self._prepare_data(train_data)
+		
+  		# Feature engineering
 		X = self._feature_engineering(X)
+   
+		numeric_cols = X.select_dtypes(include=["number"]).columns
+		other_cols = [x for x in X.columns if x not in numeric_cols]
+   
+		# Scaling
+		X = self._scaling(X, numeric_cols, other_cols)
+  
+		# Encode categorical features
 		X = self._encode_features(X, fit=True)
 
 		X_train, X_val, y_train, y_val = train_test_split(
@@ -212,22 +222,20 @@ class XGBRegressorModel(model_interface):
 	def _feature_engineering(self, data: pd.DataFrame) -> pd.DataFrame:
 		data = data.copy()
 
-		# Calculate Total Sales
-		data["Total_Sales"] = data["Sales"] * data["Quantity"]
+		# Process numeric columns
+		data["Sales_per_Quantity"] = data["Sales"] / data["Quantity"].replace(0, np.nan)
+		data["Discounted_Sales"] = data["Sales"] * (1 - data["Discount"])
+		data["Shipping_Cost_per_Unit"] = data["Shipping Cost"] / data["Quantity"].replace(0, np.nan)
+		data["Shipping_Cost_per_Sales"] = data["Shipping Cost"] / data["Sales"].replace(0, np.nan)
 
-		# Calculate Total Discounted Sales
-		data["Total_Discounted_Sales"] = data["Total_Sales"] * \
-			(1 - data["Discount"])
-
-		# Process Date Columns
+		# Process date columns
 		data['Order Date'] = pd.to_datetime(data['Order Date'])
 		data['Ship Date'] = pd.to_datetime(data['Ship Date'])
-		data['Order Processing Days'] = (
-			data['Ship Date'] - data['Order Date']).dt.days
+		data['Order Processing Days'] = (data['Ship Date'] - data['Order Date']).dt.days
 		data['Order Day Of Month'] = data['Order Date'].dt.day
 		data['Order Day Of Week'] = data['Order Date'].dt.day_of_week
 		data['Order Month'] = data['Order Date'].dt.month
-		data["Quarter"] = data["Order Date"].dt.quarter
+		data['Order Year'] = data['Order Date'].dt.year
 
 		# Droping unwanted columns
 		data.drop(columns=['Order Date', 'Ship Date'], inplace=True)
@@ -235,33 +243,47 @@ class XGBRegressorModel(model_interface):
 		data.fillna(0, inplace=True)
 		return data
 
+	def _scaling(self, data: pd.DataFrame, numeric_cols, other_cols) -> pd.DataFrame:	
+		scaler = RobustScaler()
+		data_scaled = pd.DataFrame(
+			scaler.fit_transform(data[numeric_cols]), 
+			columns = numeric_cols,
+			index = data.index
+		)
+  
+		return pd.concat([data_scaled, data[other_cols]], axis=1)
+
 	def _encode_features(self, data: pd.DataFrame, fit: bool) -> pd.DataFrame:
 		data = data.copy()
 
 		if fit:
-			self.numeric_columns = data.select_dtypes(
-				include=["int64", "float64"]).columns.tolist()
-			self.categorical_columns = data.select_dtypes(
-				include=["object", "string", "str", "category", "bool"]).columns.tolist()
+			self.numeric_columns = data.select_dtypes(include=["number"]).columns.tolist()
+			self.categorical_columns = [
+				x for x in data.select_dtypes(include=["object", "string", "str", "category"]).columns.tolist() 
+					if x not in ['Order Priority']
+			]
 
 		numeric_data = data[self.numeric_columns].copy()
 		categorical_data = pd.DataFrame(index=data.index)
 
 		if self.categorical_columns:
 			if fit:
-				encoded = self.encoder.fit_transform(
-					data[self.categorical_columns])
+				encoded = self.encoder.fit_transform(data[self.categorical_columns])
 			else:
-				encoded = self.encoder.transform(
-					data[self.categorical_columns])
+				encoded = self.encoder.transform(data[self.categorical_columns])
+
 			encoded_columns = self.encoder.get_feature_names_out(
 				self.categorical_columns)
+
 			categorical_data = pd.DataFrame(
 				encoded,
 				columns=encoded_columns,
 				index=data.index,
 			)
-
+	
+			categorical_data['Order Priority'] = data['Order Priority']\
+				.map(lambda x: 1 if x == 'Low' else 2 if x == 'Medium' else 3 if x == 'High' else 4)
+	
 		return pd.concat([numeric_data, categorical_data], axis=1)
 
 	def _load_best_params(self):

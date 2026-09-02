@@ -2,7 +2,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from sklearn.svm import SVR
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, RobustScaler
 from ..interface import model_interface
 from sklearn.model_selection import GridSearchCV
 from .regression_grader import RegressionGrader
@@ -50,7 +50,7 @@ class SVRModel(model_interface):
         # Preprocessing
         self.encoder = OneHotEncoder(
             handle_unknown="ignore", sparse_output=False)
-        self.scaler = StandardScaler()
+        self.scaler = RobustScaler()
 
         # Grader
         self.grader = RegressionGrader()
@@ -117,6 +117,12 @@ class SVRModel(model_interface):
 
             # Feature engineering
             X = self._feature_engineering(X)
+   
+            numeric_cols = X.select_dtypes(include=["number"]).columns
+            other_cols = [x for x in X.columns if x not in numeric_cols]
+    
+            # Scaling
+            X = self._scaling(X, numeric_cols, other_cols)
 
             # Encode categorical features
             X = self._encode_features(X, fit=True)
@@ -126,10 +132,6 @@ class SVRModel(model_interface):
             best_parameters = {}
 
             for kernel in kernels:
-                # Scaling
-                scaler = StandardScaler()
-                X_scale = scaler.fit_transform(X)
-
                 # GridSearchCV
                 grid = GridSearchCV(
                     estimator=SVR(),
@@ -140,7 +142,7 @@ class SVRModel(model_interface):
                     verbose=10
                 )
 
-                grid.fit(X_scale, y)
+                grid.fit(X, y)
                 current_score = -grid.best_score_
 
                 print(
@@ -156,7 +158,7 @@ class SVRModel(model_interface):
                         "C": grid.best_params_["C"]
                     }
                     
-                    if kernel['kernel'] == 'poly':
+                    if 'poly' in kernel['kernel']:
                         best_parameters.update({
                             "degree": grid.best_params_["degree"],
                             "coef0": grid.best_params_["coef0"]
@@ -228,47 +230,54 @@ class SVRModel(model_interface):
         # Add domain-specific features here.
         # The function must return a DataFrame.
 
-        # Calculate Total Sales
-        data["Total_Sales"] = data["Sales"] * data["Quantity"]
-        
-        # Calculate Total Discounted Sales
-        data["Total_Discounted_Sales"] = data["Total_Sales"] * (1 - data["Discount"])
-        
-        # Process Date Columns
+        # Process numeric columns
+        data["Sales_per_Quantity"] = data["Sales"] / data["Quantity"].replace(0, np.nan)
+        data["Discounted_Sales"] = data["Sales"] * (1 - data["Discount"])
+        data["Shipping_Cost_per_Unit"] = data["Shipping Cost"] / data["Quantity"].replace(0, np.nan)
+        data["Shipping_Cost_per_Sales"] = data["Shipping Cost"] / data["Sales"].replace(0, np.nan)
+
+        # Process date columns
         data['Order Date'] = pd.to_datetime(data['Order Date'])
         data['Ship Date'] = pd.to_datetime(data['Ship Date'])
         data['Order Processing Days'] = (data['Ship Date'] - data['Order Date']).dt.days
         data['Order Day Of Month'] = data['Order Date'].dt.day
         data['Order Day Of Week'] = data['Order Date'].dt.day_of_week
         data['Order Month'] = data['Order Date'].dt.month
-        
+        data['Order Year'] = data['Order Date'].dt.year
+
         # Droping unwanted columns
-        data.drop(columns=['Order Date', 'Ship Date'])
+        data.drop(columns=['Order Date', 'Ship Date'], inplace=True)
 
         return data
+
+    def _scaling(self, data: pd.DataFrame, numeric_cols, other_cols) -> pd.DataFrame:	
+        scaler = RobustScaler()
+        data_scaled = pd.DataFrame(
+			scaler.fit_transform(data[numeric_cols]), 
+			columns = numeric_cols,
+			index = data.index
+		)
+  
+        return pd.concat([data_scaled, data[other_cols]], axis=1)
 
     def _encode_features(self, data: pd.DataFrame, fit: bool) -> pd.DataFrame:
         data = data.copy()
 
         if fit:
-            self.numeric_columns = data.select_dtypes(
-                include=["int64", "float64"]).columns.tolist()
-
-            self.categorical_columns = (
-                data.select_dtypes(
-                    include=["object", "string", "str", "category", "bool"]).columns.tolist()
-            )
+            self.numeric_columns = data.select_dtypes(include=["number"]).columns.tolist()
+            self.categorical_columns = [
+                x for x in data.select_dtypes(include=["object", "string", "str", "category"]).columns.tolist() 
+                    if x not in ['Order Priority']
+            ]
 
         numeric_data = data[self.numeric_columns].copy()
         categorical_data = pd.DataFrame(index=data.index)
 
         if self.categorical_columns:
             if fit:
-                encoded = self.encoder.fit_transform(
-                    data[self.categorical_columns])
+                encoded = self.encoder.fit_transform(data[self.categorical_columns])
             else:
-                encoded = self.encoder.transform(
-                    data[self.categorical_columns])
+                encoded = self.encoder.transform(data[self.categorical_columns])
 
             encoded_columns = self.encoder.get_feature_names_out(
                 self.categorical_columns)
@@ -278,6 +287,9 @@ class SVRModel(model_interface):
                 columns=encoded_columns,
                 index=data.index,
             )
+    
+            categorical_data['Order Priority'] = data['Order Priority']\
+                .map(lambda x: 1 if x == 'Low' else 2 if x == 'Medium' else 3 if x == 'High' else 4)
 
         return pd.concat([numeric_data, categorical_data], axis=1)
 

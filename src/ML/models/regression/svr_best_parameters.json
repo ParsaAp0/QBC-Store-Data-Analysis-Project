@@ -1,5 +1,6 @@
 {
-    "kernel": "rbf",
+    "kernel": "poly",
     "C": 100,
-    "epsilon": 1
+    "degree": 2,
+    "coef0": 1.0
 }

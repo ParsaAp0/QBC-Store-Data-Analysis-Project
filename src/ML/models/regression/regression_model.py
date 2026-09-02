@@ -1,8 +1,9 @@
 from typing import Any
 import numpy as np
 import pandas as pd
+from sklearn.decomposition import PCA
 from sklearn.linear_model import ElasticNet
-from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, RobustScaler
 from sklearn.model_selection import GridSearchCV
 from ..interface import model_interface
 from .regression_grader import RegressionGrader
@@ -52,7 +53,7 @@ class RegressionModel(model_interface):
    			include_bias=False,
       		interaction_only=True
         )
-		self.scaler = StandardScaler()
+		self.scaler = RobustScaler()
 
 		# Grader
 		self.grader = RegressionGrader()
@@ -125,6 +126,15 @@ class RegressionModel(model_interface):
 
 			# Feature engineering
 			X = self._feature_engineering(X)
+   
+			numeric_cols = X.select_dtypes(include=["number"]).columns
+			other_cols = [x for x in X.columns if x not in numeric_cols]
+   
+			# Scaling
+			X = self._scaling(X, numeric_cols, other_cols)
+			
+			# Feature selection
+			# X = self._feature_selection(X, numeric_cols, other_cols)
 
 			# Encode categorical features
 			X = self._encode_features(X, fit=True)
@@ -140,31 +150,22 @@ class RegressionModel(model_interface):
 					include_bias=False,
 				)
 
-				numeric_columns = X.select_dtypes(
-					include=["int64", "float64"]).columns.tolist()
-				other_columns = [
-					column for column in X.columns if column not in numeric_columns]
-				numeric_data = X[numeric_columns]
+				numeric_cols = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
+				other_cols = [x for x in X.columns if x not in numeric_cols]
+				numeric_data = X[numeric_cols]
 
 				polynomial_data = polynomial_features.fit_transform(numeric_data)
-				polynomial_columns = polynomial_features.get_feature_names_out(
-					numeric_columns)
+				polynomial_columns = polynomial_features.get_feature_names_out(numeric_cols)
 
-				polynomial_dataframe = pd.DataFrame(
+				X_degree = pd.DataFrame(
 					polynomial_data,
 					columns=polynomial_columns,
 					index=X.index,
 				)
 
-				if other_columns:
-					X_degree = pd.concat(
-						[polynomial_dataframe, X[other_columns]], axis=1)
-				else:
-					X_degree = polynomial_dataframe
-
-				# Scaling
-				scaler = StandardScaler()
-				X_degree = scaler.fit_transform(X_degree)
+				if other_cols:
+					X_degree = pd.concat([X_degree, X[other_cols]], axis=1)
+    
 				# GridSearchCV
 				grid = GridSearchCV(
 					estimator=ElasticNet(),
@@ -246,11 +247,11 @@ class RegressionModel(model_interface):
 	def _feature_engineering(self, data: pd.DataFrame) -> pd.DataFrame:
 		data = data.copy()
 
-		# Calculate Total Sales
-		data["Total_Sales"] = data["Sales"] * data["Quantity"]
-		
-		# Calculate Total Discounted Sales
-		data["Total_Discounted_Sales"] = data["Total_Sales"] * (1 - data["Discount"])
+		# Process numeric columns
+		data["Sales_per_Quantity"] = data["Sales"] / data["Quantity"].replace(0, np.nan)
+		data["Discounted_Sales"] = data["Sales"] * (1 - data["Discount"])
+		data["Shipping_Cost_per_Unit"] = data["Shipping Cost"] / data["Quantity"].replace(0, np.nan)
+		data["Shipping_Cost_per_Sales"] = data["Shipping Cost"] / data["Sales"].replace(0, np.nan)
 		
 		# Process Date Columns
 		data['Order Date'] = pd.to_datetime(data['Order Date'])
@@ -259,30 +260,56 @@ class RegressionModel(model_interface):
 		data['Order Day Of Month'] = data['Order Date'].dt.day
 		data['Order Day Of Week'] = data['Order Date'].dt.day_of_week
 		data['Order Month'] = data['Order Date'].dt.month
+		data['Order Year'] = data['Order Date'].dt.year
 		
 		# Droping unwanted columns
-		data.drop(columns=['Order Date', 'Ship Date'])
+		data.drop(columns=['Order Date', 'Ship Date'], inplace=True)
 		return data
+
+	def _scaling(self, data: pd.DataFrame, numeric_cols, other_cols) -> pd.DataFrame:	
+		scaler = RobustScaler()
+		data_scaled = pd.DataFrame(
+			scaler.fit_transform(data[numeric_cols]), 
+			columns = numeric_cols,
+			index = data.index
+		)
+  
+		return pd.concat([data_scaled, data[other_cols]], axis=1)
+
+	def _feature_selection(self, data: pd.DataFrame, numeric_cols, other_cols) -> pd.DataFrame:  
+		pca = PCA(n_components = len(numeric_cols))
+		pca.fit_transform(X = data[numeric_cols])
+		cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+		n_components_90 = np.argmax(cumulative_variance >= 0.9) + 1
+		pca = PCA(n_components = n_components_90)
+		data_combined = pd.DataFrame(
+			pca.fit_transform(data[numeric_cols]),
+			columns=pca.get_feature_names_out(),
+			index=data.index
+		)
+  
+		print(len(numeric_cols), n_components_90)
+  
+		return pd.concat([data_combined, data[other_cols]], axis=1)
 
 	def _encode_features(self, data: pd.DataFrame, fit: bool) -> pd.DataFrame:
 		data = data.copy()
 
 		if fit:
-			self.numeric_columns = data.select_dtypes(
-				include=["int64", "float64"]).columns.tolist()
-			self.categorical_columns = data.select_dtypes(
-				include=["object", "string", "str", "category", "bool"]).columns.tolist()
+			self.numeric_columns = data.select_dtypes(include=["number"]).columns.tolist()
+			self.categorical_columns = [
+       			x for x in data.select_dtypes(include=["object", "string", "str", "category"]).columns.tolist() 
+          			if x not in ['Order Priority']
+			]
 
 		numeric_data = data[self.numeric_columns].copy()
 		categorical_data = pd.DataFrame(index=data.index)
 
 		if self.categorical_columns:
 			if fit:
-				encoded = self.encoder.fit_transform(
-					data[self.categorical_columns])
+				encoded = self.encoder.fit_transform(data[self.categorical_columns])
 			else:
-				encoded = self.encoder.transform(
-					data[self.categorical_columns])
+				encoded = self.encoder.transform(data[self.categorical_columns])
 
 			encoded_columns = self.encoder.get_feature_names_out(
 				self.categorical_columns)
@@ -292,6 +319,9 @@ class RegressionModel(model_interface):
 				columns=encoded_columns,
 				index=data.index,
 			)
+   
+			categorical_data['Order Priority'] = data['Order Priority']\
+				.map(lambda x: 1 if x == 'Low' else 2 if x == 'Medium' else 3 if x == 'High' else 4)
 
 		return pd.concat([numeric_data, categorical_data], axis=1)
 
