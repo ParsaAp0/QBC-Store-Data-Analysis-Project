@@ -52,6 +52,8 @@ class SVCModel(model_interface):
             handle_unknown="ignore", 
             sparse_output=False
         )
+        
+        # Scaler
         self.scaler = RobustScaler()
 
         # Grader
@@ -110,9 +112,7 @@ class SVCModel(model_interface):
 
     def tune(self, train_data: pd.DataFrame) -> dict:
         with all_params_path.open("r") as file:
-            parameters = json.load(file)
-
-            kernels = parameters
+            kernels  = json.load(file)
 
             # Prepare original data
             X, y = self._prepare_data(train_data)
@@ -138,7 +138,7 @@ class SVCModel(model_interface):
                 grid = GridSearchCV(
                     estimator=SVC(),
                     param_grid=kernel,
-                    scoring="neg_root_mean_squared_error",
+				    scoring='accuracy',
                     cv=5,
                     n_jobs=-1,
                     verbose=10
@@ -164,10 +164,6 @@ class SVCModel(model_interface):
                         best_parameters.update({
                             "degree": grid.best_params_["degree"],
                             "coef0": grid.best_params_["coef0"]
-                        })
-                    else:
-                        best_parameters.update({
-                            "epsilon": grid.best_params_["epsilon"]
                         })
 
             # Save best parameters
@@ -207,20 +203,20 @@ class SVCModel(model_interface):
         y = data[self.target_column].copy()
         
         # Cleaning outliers
-        columns_to_check = ['Sales', 'Shipping Cost']
-        mask = pd.DataFrame(index=X.index)
+        # columns_to_check = ['Total_Sales', 'Total_Profit', 'Total_Quantity']
+        # mask = pd.DataFrame(index=X.index)
 
-        for col in columns_to_check:
-            Q1 = X[col].quantile(0.25)
-            Q3 = X[col].quantile(0.75)
-            IQR = Q3 - Q1
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
-            mask[col] = (X[col] < lower_bound) | (X[col] > upper_bound)
+        # for col in columns_to_check:
+        # 	Q1 = X[col].quantile(0.25)
+        # 	Q3 = X[col].quantile(0.75)
+        # 	IQR = Q3 - Q1
+        # 	lower_bound = Q1 - 1.5 * IQR
+        # 	upper_bound = Q3 + 1.5 * IQR
+        # 	mask[col] = (X[col] < lower_bound) | (X[col] > upper_bound)
 
-        rows_to_drop = mask.any(axis=1)
-        X = X[~rows_to_drop]
-        y = y[~rows_to_drop]
+        # rows_to_drop = mask.any(axis=1)
+        # X = X[~rows_to_drop]
+        # y = y[~rows_to_drop]
 
         return X, y
 

@@ -2,10 +2,11 @@ from data.DataLoader import DataLoader
 from models.tuner import Tuner
 from models.regression.regression_model import RegressionModel
 from models.regression.xgboost_model import XGBRegressorModel
-from models.classification.xgboost_model import XGBClassifierModel
+from models.regression.svr_model import SVRModel
 from models.regression.ebm_model import EBMModel
 from models.classification.logistic_regression_model import LogisticRegressionModel
-from models.regression.svr_model import SVRModel
+from models.classification.xgboost_model import XGBClassifierModel
+from models.classification.svc_model import SVCModel
 from models.comparator import ModelComparator
 from models.selector import ModelSelector
 import json
@@ -39,7 +40,7 @@ if __name__ == "__main__":
         classification_models=[
             # LogisticRegressionModel(),
             XGBClassifierModel(),
-            SVCModel()
+            # SVCModel()
         ]
     )
 

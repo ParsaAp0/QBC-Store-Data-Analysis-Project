@@ -2,6 +2,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
+from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import OneHotEncoder, RobustScaler, LabelEncoder
 from sklearn.model_selection import GridSearchCV, train_test_split
 from ..interface import model_interface
@@ -122,9 +123,7 @@ class XGBClassifierModel(model_interface):
 
 			X_train, X_val, y_train, y_val = train_test_split(
 				X, y, 
-    			test_size=0.2, 
-       			random_state=42, 
-          		shuffle=False
+    			train_size=0.8
    			)
    
 			grid = GridSearchCV(
