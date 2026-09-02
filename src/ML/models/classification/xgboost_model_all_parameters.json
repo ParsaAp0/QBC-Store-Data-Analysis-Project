@@ -1,0 +1,9 @@
+{
+    "n_estimators": [100, 200, 400, 600],
+    "max_depth": [3, 6, 9],
+    "learning_rate": [0.01, 0.1, 0.3],
+    "subsample": [0.7, 1.0],
+    "colsample_bytree": [0.7, 1.0],
+    "reg_alpha": [0, 1, 5],
+    "reg_lambda": [1, 5, 10]
+}

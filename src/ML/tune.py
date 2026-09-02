@@ -31,9 +31,9 @@ if __name__ == "__main__":
     tuner = Tuner(
         regression_models=[
             # RegressionModel(),
-            # XGBRegressorModel(),
+            XGBRegressorModel(),
             # EBMModel(), --> too long!
-            SVRModel(),
+            # SVRModel(),
             # RandomForestRegressor(),
         ],
         classification_models=[
