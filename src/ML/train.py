@@ -8,6 +8,7 @@ from models.regression.ebm_model import EBMModel
 
 from models.classification.logistic_regression_model import LogisticRegressionModel
 from models.classification.xgboost_model import XGBClassifierModel
+from models.classification.xgboost_binary_model import XGBBinaryModel
 from models.classification.decision_tree_model import DecisionTreeModel
 from models.classification.svc_model import SVCClassifierModel
 
@@ -43,8 +44,9 @@ if __name__ == "__main__":
                 ],
                 classification_models=[
                         # LogisticRegressionModel(),
-                        XGBClassifierModel(),
-                        # DecisionTreeModel()
+                        # XGBClassifierModel(),
+                        # DecisionTreeModel(),
+                        XGBBinaryModel()
                         # SVCClassifierModel()
                 ]
         )
