@@ -220,7 +220,7 @@ class XGBBinaryModel(model_interface):
                 data = data.copy()[input_columns]
                 X = data.drop(columns=[self.target_column]).copy()
 
-                y = data[self.target_column].apply(lambda x: 1 if x == 'Same Day' else 0)
+                y = data[self.target_column].apply(lambda x: 1 if x == 'Standard Class' else 0)
 
                 return X, y
 

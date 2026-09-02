@@ -1,0 +1,41 @@
+feature,importance
+Order Priority,0.49865016
+Market_LATAM,0.017465292
+Region_North Asia,0.017249327
+Region_North,0.017189696
+Region_Southeast Asia,0.01676963
+Category_mode_Office Supplies,0.015801514
+Profit_Per_Item,0.01577071
+Sales_Per_Item,0.015752722
+Total_Profit,0.015504601
+Region_Africa,0.015389488
+Region_EMEA,0.014871827
+Category=Technology,0.0148468185
+Region_Central Asia,0.014815311
+Region_South,0.014608711
+Region_Central,0.01459832
+Segment_Corporate,0.014444496
+Market_APAC,0.014102546
+Order Day Of Week,0.014067355
+Segment_Home Office,0.013612981
+Total_Sales,0.013464251
+Order Day Of Month,0.013454197
+Segment_Consumer,0.013365694
+Category_mode_Technology,0.013227267
+Discount_Amount,0.013193397
+Region_Oceania,0.013030102
+Region_East,0.01300646
+Order Month,0.012757339
+Market_US,0.012513625
+Market_EU,0.012506023
+Region_Caribbean,0.012428785
+Region_West,0.011686281
+Market_EMEA,0.011658029
+Order Year,0.011302717
+Category_mode_Furniture,0.011117744
+Category=Office Supplies,0.010866607
+Total_Quantity,0.010696504
+Category=Furniture,0.010508437
+Region_Canada,0.0037050252
+Market_Canada,0.0
+Market_Africa,0.0
